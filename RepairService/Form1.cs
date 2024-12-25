@@ -1,4 +1,5 @@
 ﻿using Npgsql;
+using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,14 +15,31 @@ namespace RepairService
     public partial class Form1 : Form
     {
         private readonly DatabaseHelper _dbHelper;
-        string connectionString = "Host=195.46.187.72;Port=5432;Username=postgres;Password=1337;Database=repair_service";
-        public Form1()
+        private readonly string _userRole;
+        //string connectionString = "Host=195.46.187.72;Port=5432;Username=postgres;Password=1337;Database=repair_service";
+        public Form1(string userRole)
         {
             InitializeComponent();
+            ConfigureAccessByRole(); 
             // Инициализация DatabaseHelper с вашей строкой подключения
             string connectionString = "Host=195.46.187.72;Port=5432;Username=postgres;Password=1337;Database=repair_service";
             _dbHelper = new DatabaseHelper(connectionString);
+            _userRole = userRole;
+        }
+        private void ConfigureAccessByRole()
+        {
+            // Отключаем или скрываем элементы интерфейса в зависимости от роли
+            if (_userRole == "Admin")
+            {
+                button3.Enabled = true;
+                btnGetStatistics.Enabled = true;
+            }
+            else if (_userRole == "User")
+            {
+                button3.Enabled = true;
+                btnGetStatistics.Enabled = true;
 
+            }
         }
         private void btnSearch_Click(object sender, EventArgs e)
         {
@@ -46,28 +64,16 @@ namespace RepairService
                 var selectedRow = dataGridViewRequests.SelectedRows[0];
                 Guid requestId = (Guid)selectedRow.Cells["RequestId"].Value; // Предполагаем, что в DataGridView есть столбец "RequestId"
 
-                // Подключаемся к базе данных и выполняем запрос на удаление
-                using (var connection = new NpgsqlConnection(connectionString))
+                bool isDeleted = _dbHelper.DeleteRequest(requestId);
+                if (isDeleted)
                 {
-                    connection.Open();
-
-                    string query = "DELETE FROM requests WHERE requestid = @requestid";
-                    using (var cmd = new NpgsqlCommand(query, connection))
-                    {
-                        cmd.Parameters.AddWithValue("@requestid", requestId);
-
-                        int rowsAffected = cmd.ExecuteNonQuery();
-                        if (rowsAffected > 0)
-                        {
-                            MessageBox.Show("Заявка успешно удалена.");
-                            // Обновляем DataGridView
-                            LoadRequests();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Ошибка при удалении заявки.");
-                        }
-                    }
+                    MessageBox.Show("Заявка успешно удалена.");
+                    // Обновляем DataGridView
+                    LoadRequests();
+                }
+                else
+                {
+                    MessageBox.Show("Ошибка при удалении заявки.");
                 }
             }
             else
@@ -75,6 +81,7 @@ namespace RepairService
                 MessageBox.Show("Выберите заявку для удаления.");
             }
         }
+
         private void LoadRequests()
         {
             try
@@ -124,7 +131,35 @@ namespace RepairService
             // Перезагружаем список заявок после редактирования
             LoadRequests();
         }
+        private void BtnGenerateQRCode_Click(object sender, EventArgs e)
+        {
+            // Получаем данные из текстового поля
+            string qrCodeText = "https://docs.google.com/forms/d/e/1FAIpQLSfkJf4oLCYcKbQggFu97aT6VplRHjBeAAj23LbdNANcQoncPw/viewform?usp=dialog";
 
+            if (string.IsNullOrEmpty(qrCodeText))
+            {
+                MessageBox.Show("Введите данные для генерации QR-кода.");
+                return;
+            }
+
+            try
+            {
+                // Генерация QR-кода с помощью QRCoder
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(qrCodeText, QRCodeGenerator.ECCLevel.Q); // Создаем данные QR
+
+                // Генерация QR-кода как изображение
+                QRCode qrCode = new QRCode(qrCodeData);
+                Bitmap qrCodeImage = qrCode.GetGraphic(3); // 20 - это размер пикселей QR-кода
+
+                // Отображаем QR-код в PictureBox
+                pictureBoxQRCode.Image = qrCodeImage;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при генерации QR-кода: " + ex.Message);
+            }
+        }
 
     }
 }

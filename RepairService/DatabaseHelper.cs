@@ -16,7 +16,22 @@ namespace RepairService
         {
             _connectionString = connectionString;
         }
+        public bool DeleteRequest(Guid requestId)
+        {
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
 
+                string query = "DELETE FROM requests WHERE requestid = @requestid";
+                using (var cmd = new NpgsqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@requestid", requestId);
+
+                    int rowsAffected = cmd.ExecuteNonQuery();
+                    return rowsAffected > 0;
+                }
+            }
+        }
         public void AddRequest(Request request)
         {
             using (var connection = new NpgsqlConnection(_connectionString))
@@ -159,6 +174,51 @@ namespace RepairService
             // Если заявка с указанным ID не найдена, возвращаем null
             return null;
         }
+        public void RegisterUser(string username, string passwordHash)
+        {
+            string query = "INSERT INTO users (username, password_hash) VALUES (@username, @passwordHash)";
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("username", username);
+                    command.Parameters.AddWithValue("passwordHash", passwordHash);
+                    command.Parameters.AddWithValue("role", "User");
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
 
+        // Метод для получения хэша пароля по имени пользователя
+        public string GetPasswordHash(string username)
+        {
+            string query = "SELECT password_hash FROM users WHERE username = @username";
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("username", username);
+                    var result = command.ExecuteScalar();
+                    return result?.ToString(); // Возвращаем строку или null, если пользователь не найден
+                }
+            }
+        }
+
+        public string GetUserRole(string username)
+        {
+            string query = "SELECT role FROM users WHERE username = @username";
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("username", username);
+                    var result = command.ExecuteScalar();
+                    return result?.ToString(); // Возвращаем роль или null, если пользователь не найден
+                }
+            }
+        }
     }
 }

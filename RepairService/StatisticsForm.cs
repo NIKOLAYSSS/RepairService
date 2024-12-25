@@ -25,7 +25,6 @@ namespace RepairService
             var statistics = GetStatistics();
             lblCompletedRequests.Text = $"Выполненные заявки: {statistics.CompletedRequests}";
             lblAverageCompletionTime.Text = $"Среднее время выполнения: {statistics.AverageCompletionTime} ч.";
-            dgvFaultTypeStatistics.DataSource = statistics.FaultTypeStatistics;
         }
 
         // Метод для получения статистики
