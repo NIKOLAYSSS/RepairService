@@ -13,7 +13,7 @@ namespace RepairService
 {
     public partial class StatisticsForm : Form
     {
-        private string connectionString = "Host=195.46.187.72;Port=5432;Username=postgres;Password=1337;Database=repair_service";
+        private string connectionString = "Host=195.46.187.72;Port=5432;Username=postgres;Password=1337;Database=db_repair_service";
 
         public StatisticsForm()
         {

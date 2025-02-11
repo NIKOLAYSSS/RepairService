@@ -9,23 +9,23 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BCrypt.Net;
+using RepairService.MODELS;
+using RepairService.DAL;
 
 
-namespace RepairService
+namespace RepairService.UI
 {
     public partial class LoginForm : Form
     {
-        private DatabaseHelper _databaseManager;
+        private readonly IUserService _userService;
         private string _currentUserRole;
 
-        public LoginForm()
+        public LoginForm(IUserService userService)
         {
-            string connectionString = "Host=195.46.187.72;Port=5432;Username=postgres;Password=1337;Database=repair_service";
-            _databaseManager = new DatabaseHelper(connectionString);
+            _userService = userService;
             InitializeComponent();
         }
 
-        // Обработчик кнопки регистрации
         private void btnRegister_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text;
@@ -39,14 +39,11 @@ namespace RepairService
 
             try
             {
-                // Хэшируем пароль
                 string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
-
-                // Регистрируем пользователя через DatabaseManager
-                _databaseManager.RegisterUser(username, passwordHash);
+                _userService.RegisterUser(username, passwordHash);
                 MessageBox.Show("Регистрация успешна!");
             }
-            catch (PostgresException ex) when (ex.SqlState == "23505") // Проверка уникальности имени
+            catch (PostgresException ex) when (ex.SqlState == "23505")
             {
                 MessageBox.Show("Такой пользователь уже существует.");
             }
@@ -55,8 +52,7 @@ namespace RepairService
                 MessageBox.Show($"Ошибка: {ex.Message}");
             }
         }
-        // Обработчик кнопки входа
-        // Обработчик кнопки входа
+
         private void btnLogin_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text;
@@ -70,20 +66,17 @@ namespace RepairService
 
             try
             {
-                // Получаем хэш пароля через DatabaseManager
-                string storedHash = _databaseManager.GetPasswordHash(username);
+                string storedHash = _userService.GetPasswordHash(username);
 
                 if (!string.IsNullOrEmpty(storedHash))
                 {
-                    // Проверяем пароль
                     if (BCrypt.Net.BCrypt.Verify(password, storedHash))
                     {
-                        // Получаем роль пользователя
-                        _currentUserRole = _databaseManager.GetUserRole(username);
+                        _currentUserRole = _userService.GetUserRole(username);
                         MessageBox.Show($"Авторизация успешна! Ваша роль: {_currentUserRole}");
-                        Form1 mainForm = new Form1(_currentUserRole); // Создаём объект главной формы
-                        mainForm.Show(); // Открываем главную форму
-                        this.Hide(); // Скрываем текущую форму
+                        Form1 mainForm = new Form1(new DatabaseHelper("Host=195.46.187.72;Port=5432;Username=postgres;Password=1337;Database=db_repair_service"), _currentUserRole);
+                        mainForm.Show();
+                        this.Hide();
                     }
                     else
                     {

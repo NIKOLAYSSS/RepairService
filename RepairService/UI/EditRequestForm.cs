@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RepairService.MODELS;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -8,16 +9,16 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace RepairService
+namespace RepairService.UI
 {
     public partial class EditRequestForm : Form
     {
-        private readonly DatabaseHelper _dbHelper;
+        private readonly IRequestService _requestService;
         private readonly Guid _requestId;
 
-        public EditRequestForm(DatabaseHelper dbHelper, Guid requestId)
+        public EditRequestForm(IRequestService requestService, Guid requestId)
         {
-            _dbHelper = dbHelper;
+            _requestService = requestService;
             _requestId = requestId;
             InitializeComponent();
             LoadRequestData();
@@ -27,8 +28,7 @@ namespace RepairService
         {
             try
             {
-                // Получаем данные заявки из базы данных
-                var request = _dbHelper.GetRequestById(_requestId);
+                var request = _requestService.GetRequestById(_requestId);
 
                 if (request == null)
                 {
@@ -37,7 +37,6 @@ namespace RepairService
                     return;
                 }
 
-                // Заполняем поля формы данными заявки
                 txtDescription.Text = request.Description;
                 cmbStatus.SelectedItem = request.Status;
                 txtResponsible.Text = request.Responsible ?? string.Empty;
@@ -52,25 +51,21 @@ namespace RepairService
         {
             try
             {
-                // Обновляем данные заявки
                 var updatedRequest = new Request
                 {
                     RequestId = _requestId,
-                    //RequestDate = DateTime.Now,
                     Description = txtDescription.Text.Trim(),
                     Status = cmbStatus.SelectedItem?.ToString(),
                     Responsible = txtResponsible.Text.Trim()
                 };
 
-                // Проверка обязательных полей
                 if (string.IsNullOrEmpty(updatedRequest.Description) || string.IsNullOrEmpty(updatedRequest.Status))
                 {
                     MessageBox.Show("Пожалуйста, заполните все обязательные поля.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                // Сохранение изменений в базу данных
-                _dbHelper.UpdateRequest(updatedRequest);
+                _requestService.UpdateRequest(updatedRequest);
 
                 MessageBox.Show("Заявка успешно обновлена.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
@@ -80,7 +75,5 @@ namespace RepairService
                 MessageBox.Show($"Ошибка при обновлении заявки: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-       
     }
 }

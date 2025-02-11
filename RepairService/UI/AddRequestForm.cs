@@ -1,4 +1,6 @@
-﻿using System;
+﻿using RepairService.MODELS;
+using RepairService.DAL;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -8,23 +10,22 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace RepairService
+namespace RepairService.UI
 {
     public partial class AddRequestForm : Form
     {
-        private readonly DatabaseHelper _dbHelper;
+        private readonly IRequestService _requestService;
 
-        public AddRequestForm(DatabaseHelper dbHelper)
+        public AddRequestForm(IRequestService requestService)
         {
             InitializeComponent();
-            _dbHelper = dbHelper;
+            _requestService = requestService;
         }
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
             try
             {
-                // Получение данных из элементов формы
                 var request = new Request
                 {
                     RequestId = Guid.NewGuid(),
@@ -37,7 +38,6 @@ namespace RepairService
                     RequestDate = dtpRequestDate.Value
                 };
 
-                // Проверка обязательных полей
                 if (string.IsNullOrEmpty(request.Equipment) ||
                     string.IsNullOrEmpty(request.FaultType) ||
                     string.IsNullOrEmpty(request.ClientName))
@@ -46,8 +46,7 @@ namespace RepairService
                     return;
                 }
 
-                // Добавление заявки в базу данных
-                _dbHelper.AddRequest(request);
+                _requestService.AddRequest(request);
 
                 MessageBox.Show("Заявка успешно добавлена.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();

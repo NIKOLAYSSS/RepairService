@@ -1,4 +1,4 @@
-﻿namespace RepairService
+﻿namespace RepairService.UI
 {
     partial class Form1
     {

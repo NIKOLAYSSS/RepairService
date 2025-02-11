@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using RepairService.DAL;
+using RepairService.MODELS;
+using RepairService.UI;
 
 namespace RepairService
 {
@@ -16,7 +19,13 @@ namespace RepairService
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new LoginForm());
+            string connectionString = "Host=195.46.187.72;Port=5432;Username=postgres;Password=1337;Database=db_repair_service";
+
+            // Создаем экземпляр UserRepository
+            IUserService userService = new UserRepository(connectionString);
+
+            // Передаем userService в LoginForm
+            Application.Run(new LoginForm(userService));
         }
     }
 }
